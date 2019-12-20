@@ -1,0 +1,12 @@
+robobrowser
+lxml
+tensorflow == 2.0.0
+requests
+pillow
+numpy == 1.16.4
+
+[Tensorflow Object Detection API]
+	git clone tensorflow/models
+	protobuf-compiler
+	python-tk
+
