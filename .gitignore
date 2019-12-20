@@ -1,6 +1,6 @@
-images/
-settings.ini
-persons.json
+src/images/
+src/settings.ini
+src/persons.json
 
 
 # Byte-compiled / optimized / DLL files
