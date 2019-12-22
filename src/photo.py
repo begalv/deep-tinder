@@ -4,9 +4,6 @@ from PIL import Image, ImageDraw
 from config import CONFIG
 from detectron2.engine import DefaultPredictor
 from detectron2.config import get_cfg
-from detectron2.utils.visualizer import Visualizer
-from detectron2.data import MetadataCatalog
-import cv2
 
 
 class Photo():
@@ -15,11 +12,11 @@ class Photo():
     width = 172
 
     def __init__(self, id, url):
-        self.__id = id
-        self.__url = url
-        self.__valid = False
-        self.__pil_img =  self.__get_pil_img()
-        self.__np_img = self.__to_np_array()
+        self.__id = id                                 #string: photo's indivudual id
+        self.__url = url                               #string: photo's url on tinder servers
+        self.__valid = False                           #bool: if the photo matches the neural net and dataset critereas
+        self.__pil_img =  self.__get_pil_img()         #Image object: photo's pillow image object
+        self.__np_img = self.__to_np_array()           #numpy array: photo's numpy array of raw data
         self.__find_relevant_person()
         #self.__run_inference()
 
@@ -29,6 +26,11 @@ class Photo():
 
 
     def __get_pil_img(self):
+        '''
+        input: Photo's url
+        output: Photo's pillow image | None | Request error data
+        obs: It makes a request to tinder servers and opens the photo's raw data with pillow
+        '''
         try:
             raw_img = requests.get(self.__url, stream=True).raw
             img = Image.open(raw_img)
@@ -49,7 +51,8 @@ class Photo():
 
     def __to_np_array(self, image=None):
         '''
-        input: Photo's pillow image
+        input: Photo's RGB pillow image | other pillow images passed through parameter
+        output: Photo's 3d numpy array of uint8 elements | None
         '''
         if self.__valid:
             if image != None:
@@ -85,7 +88,7 @@ class Photo():
     def __find_relevant_person(self):
         '''
         input: Inference on the photo made by the object detection API
-        output: Dict {"img": cropped image of the person on the photo, "coordinates": coordinates of that person on the real photo}
+        output: Dict {"img": cropped image of the person on the photo, "coordinates": coordinates of that person on the real photo} | None
         obs: It discards photos with more than one person or no person at all, as well photos which the person represents less than 40% of the total image.
         '''
         if self.__valid:
