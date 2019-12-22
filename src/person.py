@@ -21,7 +21,7 @@ class Person():
     def __get_photos(self, data):
         photos = []
         for photo in data['photos']:
-            photos.append(Photo(photo['id'], photo['url']))
+            photos.append(Photo(photo['id'], photo['processedFiles'][2]['url']))
         return photos
 
     def __get_schools(self, data):

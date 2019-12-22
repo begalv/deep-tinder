@@ -1,0 +1,11 @@
+_BASE_: "Base-RCNN-FPN.yaml"
+MODEL:
+  WEIGHTS: "detectron2://COCO-Detection/faster_rcnn_R_101_FPN_3x/137851257/model_final_f6e8b1.pkl"
+  MASK_ON: True
+  RESNETS:
+    DEPTH: 101
+  DEVICE: "cpu"
+SOLVER:
+  STEPS: (210000, 250000)
+  MAX_ITER: 270000
+VERSION: 2
