@@ -2,23 +2,24 @@ import re
 import robobrowser
 import requests
 import json
+import yaml
+import datetime
+import tqdm
 from person import Person
-from config import CONFIG
 
+config_file = './settings/configs.yaml'
+with open(config_file, 'r') as cfile:
+    configs = yaml.full_load(cfile)
 
-
-username = CONFIG['fb_login']['username']
-password = CONFIG['fb_login']['password']
-
-TINDER_URL = "https://api.gotinder.com"
 
 class Tinder_API():
+
+    URL = "https://api.gotinder.com"
 
     def __init__(self, fb_email, fb_passwd):
         self.__fb_email = fb_email
         self.__fb_passwd = fb_passwd
         self.__token = self.__login()
-
 
 
     def __get_fb_acess(self):
@@ -53,7 +54,7 @@ class Tinder_API():
 
     def __login(self):
         fb_token = self.__get_fb_acess()
-        tinder_auth_url = TINDER_URL + '/v2/auth/login/facebook'
+        tinder_auth_url = self.URL + '/v2/auth/login/facebook'
         fb_data = {"token": fb_token}
 
         try:
@@ -75,13 +76,14 @@ class Tinder_API():
 
 
     def scan_people(self):
-        url = TINDER_URL + "/v2/recs/core"
+        url = self.URL + "/v2/recs/core"
         people = []
         try:
             scan_data = requests.get(url, headers = {"X-Auth-Token": self.__token}).json()["data"]
+            bar = tqdm.tqdm(total=len(scan_data['results']), desc='Scanning people nearby')
             for person_data in scan_data['results']:
-                person_data['user'].update({"distance_mi":person_data["distance_mi"]})
-                people.append(Person(person_data['user']))
+                people.append(self.get_person(person_data['user']['_id']))
+                bar.update(1)
             return people
         except Exception as e:
             msg = "Something went wrong. Could not scan for people."
@@ -94,13 +96,34 @@ class Tinder_API():
 
 
 
-    def get_person(self, person_id):
-        url = TINDER_URL + "/user/" + person_id
+    def get_person(self, person_id, download_photos=False):
+        url = self.URL + "/user/" + person_id
         try:
             person_data = requests.get(url, headers = {"X-Auth-Token": self.__token}).json()["results"]
-            return Person(person_data)
+            return Person(person_data, download_photos)
         except Exception as e:
             msg = "Something went wrong. Could not get person's data."
+            #print("{}\nError: {}".format(msg, e))
+            error_data = {
+                "message": msg,
+                "error": e
+            }
+            return error_data
+
+
+
+    def get_matches(self, last=10):
+        url = self.URL + "/v2/matches?count={}&is_tinder_u=false&locale=en".format(last)
+        matches = []
+        try:
+            matches_data = requests.get(url, headers = {"X-Auth-Token": self.__token}).json()['data']['matches']
+            bar = tqdm.tqdm(total=len(matches_data), desc='Getting matches')
+            for match in matches_data:
+                matches.append(self.get_person(match['person']['_id'], download_photos=True))
+                bar.update(1)
+            return matches
+        except Exception as e:
+            msg = "Something went wrong. Could not get matches data."
             print("{}\nError: {}".format(msg, e))
             error_data = {
                 "message": msg,
@@ -109,8 +132,9 @@ class Tinder_API():
             return error_data
 
 
+
     def like(self, person):
-        url = TINDER_URL + "/like/" + person.get_id()
+        url = self.URL + "/like/" + person.get_id()
         try:
             response = requests.get(url, headers = {"X-Auth-Token": self.__token}).json()
             like_data = {
@@ -131,7 +155,7 @@ class Tinder_API():
 
 
     def super_like(self, person):
-        url = TINDER_URL  + "/like/{}/super".format(person.get_id())
+        url = self.URL  + "/like/{}/super".format(person.get_id())
         try:
             response = requests.post(url, headers = {"X-Auth-Token": self.__token}).json()
             super_like_data = {
@@ -152,7 +176,7 @@ class Tinder_API():
 
 
     def dislike(self, person):
-        url = TINDER_URL + "/pass/" + person.get_id()
+        url = self.URL + "/pass/" + person.get_id()
         try:
             response = requests.get(url, headers = {"X-Auth-Token": self.__token}).json()
             print("Disliked: {}".format(person))
@@ -168,7 +192,20 @@ class Tinder_API():
 
 
 
+if __name__ == '__main__':
 
+    username = configs['fb_login']['username']
+    password = configs['fb_login']['password']
 
-api = Tinder_API(username, password)
-person = api.get_person('5df3e376a2eb92010082fa43')
+    api = Tinder_API(username, password)
+    people = api.scan_people()
+    for person in people:
+        print(person)
+    #person = api.get_person('57c99ffd53364ab70fbe741b')
+    #print(person)
+    #5d37c3af4dc7641f00dfaf48
+    #57c99ffd53364ab70fbe741b
+    #5df3df6ed665f201008bd5e2
+    #5d79b2ccfc22533b1915fe33
+    #5df3e25c8746120100d1a20e
+    #53191349caa7efeb6100028b

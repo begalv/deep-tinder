@@ -21,7 +21,7 @@ MODEL:
   ROI_HEADS:
     NAME: "StandardROIHeads"
     IN_FEATURES: ["p2", "p3", "p4", "p5"]
-    SCORE_THRESH_TEST: 0.85
+    SCORE_THRESH_TEST: 0.75
   ROI_BOX_HEAD:
     NAME: "FastRCNNConvFCHead"
     NUM_FC: 2
@@ -31,8 +31,8 @@ MODEL:
     NUM_CONV: 4
     POOLER_RESOLUTION: 14
 DATASETS:
-  TRAIN: ("coco_2017_train",)
-  TEST: ("coco_2017_val",)
+  TRAIN: ("coco_2019_train",)
+  TEST: ("coco_2019_val",)
 SOLVER:
   IMS_PER_BATCH: 16
   BASE_LR: 0.02
